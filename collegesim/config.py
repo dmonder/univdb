@@ -93,6 +93,12 @@ class SimConfig:
     program_id_format: str = "{prefix}{cip}"
     course_id_format: str = "{subject}-{number}"
     section_id_format: str = "{term}-{course}-{section}"
+    # course content patterns
+    subject_length: int = 3         # 3 (NUR) or 4 (NURS)
+    course_number_digits: int = 3   # 3 (110) or 4 (1100)
+    section_style: str = "01"       # "01", "001", "1", or "A" (letters)
+    # student home towns; empty -> institution city (Haywood gets a WNC list)
+    towns: list = field(default_factory=list)
     field_defaults: dict = field(default_factory=dict)
 
     def default_out_db(self):

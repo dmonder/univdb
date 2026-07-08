@@ -39,6 +39,17 @@ GENED = [  # (subject, number, title, credits) common lower-division courses
 ]
 SUBJECT_BY_CIP4 = {"51.38": "NUR", "51.06": "DEN", "51.07": "HMT",
                    "51.09": "RCP", "51.00": "MED", "51.08": "MED"}
+# 4-character variants used when cfg.subject_length == 4
+SUBJECT4 = {"AGR": "AGRI", "FOR": "FRST", "DME": "DMED", "CIS": "CISC",
+            "COS": "COSM", "EDU": "EDUC", "EGR": "ENGR", "LEX": "LEGL",
+            "ACA": "ACAD", "BIO": "BIOL", "SCI": "SCIN", "CJC": "CRJU",
+            "HSE": "HMSV", "SOC": "SOCI", "CST": "CNST", "AUT": "AUTO",
+            "WLD": "WELD", "TRN": "TRAN", "ART": "ARTS", "HEA": "HLTH",
+            "BUS": "BUSI", "NUR": "NURS", "DEN": "DENT", "HMT": "HIMT",
+            "RCP": "RESP", "MED": "MEDA", "GEN": "GENS", "ENG": "ENGL",
+            "MAT": "MATH", "PSY": "PSYC", "HIS": "HIST", "CHM": "CHEM",
+            "COM": "COMM", "MUS": "MUSC", "HUM": "HUMA", "PED": "PHED",
+            "ECO": "ECON", "POL": "POLS"}
 SUBJECT_BY_CIP2 = {
     "01": "AGR", "03": "FOR", "10": "DME", "11": "CIS", "12": "COS",
     "13": "EDU", "15": "EGR", "19": "EDU", "22": "LEX", "24": "ACA",
@@ -102,8 +113,12 @@ class Simulator:
         self.fake = Faker("en_US")
         Faker.seed(cfg.seed)
         self.cip_titles = cip_title_lookup
-        self.towns = (WNC_TOWNS if cfg.unitid == 198668
-                      else [cfg.school_city or "Springfield"])
+        if cfg.towns:
+            self.towns = list(cfg.towns)
+        elif cfg.unitid == 198668:
+            self.towns = WNC_TOWNS
+        else:
+            self.towns = [cfg.school_city or "Springfield"]
         self.zip_prefix = (cfg.school_zip or "28721")[:3]
         self.students = {}          # sid -> dict (full population state)
         self.programs = {}          # program_id -> dict
@@ -129,13 +144,35 @@ class Simulator:
         return self.cfg.program_id_format.format(
             prefix=prefix, cip=cip.replace(".", ""), cip_dotted=cip)
 
+    def _subject(self, subj):
+        """Canonical 3-char subject -> configured length."""
+        if self.cfg.subject_length == 4:
+            return SUBJECT4.get(subj, (subj + "S")[:4])
+        return subj
+
+    def _number(self, num):
+        """Canonical 3-digit course number -> configured digits."""
+        n = int(num)
+        return str(n * 10) if self.cfg.course_number_digits == 4 else str(n)
+
+    def _section_label(self, n):
+        style = self.cfg.section_style
+        if style == "A":
+            return (chr(64 + n) if n <= 26
+                    else chr(64 + (n - 1) // 26) + chr(65 + (n - 1) % 26))
+        if style == "001":
+            return f"{n:03d}"
+        if style == "1":
+            return str(n)
+        return f"{n:02d}"
+
     def _course_id(self, subject, number):
         return self.cfg.course_id_format.format(subject=subject,
                                                 number=number)
 
     def _section_id(self, term_id, course_id, n):
         return self.cfg.section_id_format.format(
-            term=term_id, course=course_id, section=f"{n:02d}")
+            term=term_id, course=course_id, section=self._section_label(n))
 
     def _course_pool(self, level):
         """(candidate numbers, courses per program) by award level/sector."""
@@ -174,9 +211,10 @@ class Simulator:
         # gen-ed courses
         self.gened_ids = []
         for subj, num, title, cr in GENED:
-            cid = self._course_id(subj, num)
-            self.courses[cid] = {"course_id": cid, "subject": subj,
-                                 "course_number": num, "title": title,
+            s, n = self._subject(subj), self._number(num)
+            cid = self._course_id(s, n)
+            self.courses[cid] = {"course_id": cid, "subject": s,
+                                 "course_number": n, "title": title,
                                  "credits": cr,
                                  "department": "General Education"}
             self.gened_ids.append(cid)
@@ -192,14 +230,15 @@ class Simulator:
                                replace=False)
             ids = []
             for num in sorted(nums):
-                cid = self._course_id(subj, num)
+                s, n = self._subject(subj), self._number(num)
+                cid = self._course_id(s, n)
                 if cid not in self.courses:
                     cr = 4 if (subj in ("NUR", "BIO", "CHM", "EGR")
                                and prng.random() < 0.5) else 3
                     self.courses[cid] = {
-                        "course_id": cid, "subject": subj,
-                        "course_number": str(num),
-                        "title": f"{p['title'][:38]} {num}", "credits": cr,
+                        "course_id": cid, "subject": s,
+                        "course_number": n,
+                        "title": f"{p['title'][:38]} {n}", "credits": cr,
                         "department": p["title"][:38]}
                 ids.append(cid)
             if level not in GRAD_LEVELS:
@@ -601,7 +640,7 @@ class Simulator:
                 modality = ("ONLINE" if self.rng.random() < online_p else
                             ("HYBRID" if self.rng.random() < 0.2 else "TRAD"))
                 self._buf["sections"].append(
-                    (sec_id, cid, term_id, f"{j + 1:02d}",
+                    (sec_id, cid, term_id, self._section_label(j + 1),
                      str(self.rng.choice(self.instructors[subj])),
                      modality, 24))
                 secs.append(sec_id)

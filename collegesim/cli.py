@@ -42,6 +42,16 @@ def main(argv=None):
     b.add_argument("--section-id-format", default="{term}-{course}-{section}",
                    help="template with {term} {course} {section} "
                         "(default '{term}-{course}-{section}')")
+    b.add_argument("--subject-length", type=int, choices=(3, 4), default=3,
+                   help="subject prefix length: 3 (NUR) or 4 (NURS)")
+    b.add_argument("--course-number-digits", type=int, choices=(3, 4),
+                   default=3, help="course number digits: 3 (110) or 4 (1100)")
+    b.add_argument("--section-style", choices=("01", "001", "1", "A"),
+                   default="01",
+                   help="section labels: 01 (default), 001, 1, or A/B/C")
+    b.add_argument("--towns", default="",
+                   help="comma-separated student home towns "
+                        "(default: institution city)")
 
     s = sub.add_parser("supplement",
                        help="append a newly released IPEDS year")
@@ -68,7 +78,12 @@ def main(argv=None):
                         size_limit=args.size_limit, force=args.force,
                         program_id_format=args.program_id_format,
                         course_id_format=args.course_id_format,
-                        section_id_format=args.section_id_format)
+                        section_id_format=args.section_id_format,
+                        subject_length=args.subject_length,
+                        course_number_digits=args.course_number_digits,
+                        section_style=args.section_style,
+                        towns=[t.strip() for t in args.towns.split(",")
+                               if t.strip()])
         build(cfg)
     elif args.cmd == "supplement":
         from .builder import supplement

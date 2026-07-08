@@ -79,7 +79,11 @@ def build(cfg):
             "two_year": int(profile["two_year"]),
             "program_id_format": cfg.program_id_format,
             "course_id_format": cfg.course_id_format,
-            "section_id_format": cfg.section_id_format}
+            "section_id_format": cfg.section_id_format,
+            "subject_length": cfg.subject_length,
+            "course_number_digits": cfg.course_number_digits,
+            "section_style": cfg.section_style,
+            "towns": "|".join(cfg.towns)}
     con.executemany("INSERT OR REPLACE INTO sim_meta VALUES (?,?)",
                     [(k, str(v)) for k, v in meta.items()])
 
@@ -151,6 +155,11 @@ def supplement(db_path, source_db, fall_year, seed=None, malform_rate=None):
     cfg.course_id_format = meta.get("course_id_format", cfg.course_id_format)
     cfg.section_id_format = meta.get("section_id_format",
                                      cfg.section_id_format)
+    cfg.subject_length = int(meta.get("subject_length", cfg.subject_length))
+    cfg.course_number_digits = int(meta.get("course_number_digits",
+                                            cfg.course_number_digits))
+    cfg.section_style = meta.get("section_style", cfg.section_style)
+    cfg.towns = [t for t in meta.get("towns", "").split("|") if t]
     if seed is not None:
         cfg.seed = seed
     if malform_rate is not None:
@@ -171,7 +180,11 @@ def supplement(db_path, source_db, fall_year, seed=None, malform_rate=None):
                      ("two_year", str(int(profile["two_year"]))),
                      ("program_id_format", cfg.program_id_format),
                      ("course_id_format", cfg.course_id_format),
-                     ("section_id_format", cfg.section_id_format)])
+                     ("section_id_format", cfg.section_id_format),
+                     ("subject_length", str(cfg.subject_length)),
+                     ("course_number_digits", str(cfg.course_number_digits)),
+                     ("section_style", cfg.section_style),
+                     ("towns", "|".join(cfg.towns))])
     sim.run_year(targets, prev_retention)
 
     n_bad = malform.inject(con, cfg.malform_rate * 0.1, cfg.seed)

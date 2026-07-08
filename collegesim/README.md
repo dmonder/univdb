@@ -55,12 +55,23 @@ Program and course IDs are templated:
   Default `{prefix}{cip}` -> `A513801`.
 - `--course-id-format` placeholders: `{subject}`, `{number}`.
   Default `{subject}-{number}` -> `NUR-110`.
-- `--section-id-format` placeholders: `{term}`, `{course}`, `{section}`
-  (zero-padded section number). Default `{term}-{course}-{section}` ->
-  `2014FA-NUR-110-01`.
+- `--section-id-format` placeholders: `{term}`, `{course}`, `{section}`.
+  Default `{term}-{course}-{section}` -> `2014FA-NUR-110-01`.
 
-Formats are stored in `sim_meta` and reused by `supplement`, so IDs stay
-consistent across runs.
+Course content patterns are configurable separately from the ID templates:
+
+- `--subject-length 3|4` -- subject prefix style, `NUR` vs `NURS` (built-in
+  4-character variants like ENGL/MATH/PSYC; unknown subjects are padded)
+- `--course-number-digits 3|4` -- `110` vs `1100` (level encoding is kept:
+  1xxx/2xxx lower division, 3xxx/4xxx upper, 5xxx+ graduate)
+- `--section-style 01|001|1|A` -- section labels `01`, `001`, `1`, or
+  letters `A`, `B`, ... (`AA` after `Z`)
+- `--towns "Waynesville,Canton,Clyde"` -- student home towns (~90% drawn
+  from the list, the rest generated); default is the institution's city,
+  and Haywood CC gets a built-in western-NC list
+
+All formats and patterns are stored in `sim_meta` and reused by
+`supplement`, so identifiers stay consistent across runs.
 
 ## What is calibrated vs emergent
 
