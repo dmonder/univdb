@@ -1,0 +1,12 @@
+# IPEDS source and generated databases (large / regenerable)
+*.duckdb
+output/
+data/
+*.accdb
+*.sync-conflict-*
+
+# R / Python cruft
+.Rhistory
+.Rproj.user/
+__pycache__/
+*.pyc
