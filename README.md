@@ -77,3 +77,8 @@ the 2023-24 and 2024-25 releases.
 ## Credits
 
 IPEDS data comes from the National Center for Education Statistics (NCES).
+
+## License
+
+MIT. See [LICENSE](LICENSE). The NCES table documentation files are public
+data from the U.S. Department of Education.
