@@ -10,3 +10,10 @@ data/
 .Rproj.user/
 __pycache__/
 *.pyc
+
+# Local notes, not for the public repo
+ONBOARDING.md
+RESUME.md
+
+# IPEDSR lives in its own repo (github.com/stanislavzza/IPEDSR)
+IPEDSR/
